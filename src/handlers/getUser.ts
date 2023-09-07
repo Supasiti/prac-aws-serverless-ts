@@ -1,3 +1,4 @@
+import { log } from '../common/logger';
 import { DataNotFoundError, ValidationError } from '../common/error';
 import { error, success } from '../common/jsonResponse';
 import * as userServiceMod from '../services/userService';
@@ -8,9 +9,10 @@ type HandlerDeps = {
 
 export const handler = async (
   event: AWSLambda.APIGatewayEvent,
+  _ctx: Partial<AWSLambda.Context>,
   deps?: HandlerDeps,
 ) => {
-  console.log(event);
+  log.info(event, 'getUser Event');
   const { userService = userServiceMod } = deps || {};
 
   try {
@@ -25,9 +27,10 @@ export const handler = async (
       throw DataNotFoundError('no user found');
     }
 
+    log.info(user, 'getUser response data');
     return success({ data: user });
   } catch (err) {
-    console.error(err);
+    log.error(err);
     return error(err as Error);
   }
 };
