@@ -1,10 +1,10 @@
 import pino from 'pino';
 
 export const log = pino({
-  transport: {
-    target: 'pino-pretty', // require pino-pretty library
-    options: {
-      colorize: true,
+  timestamp: false,
+  formatters: {
+    level(lvl: string) {
+      return { level: (lvl || 'info').toUpperCase() };
     },
   },
 });

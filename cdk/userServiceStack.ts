@@ -20,6 +20,10 @@ export class FunctionStack extends cdk.Stack {
         target: 'es2020',
         format: nodeLambda.OutputFormat.ESM,
         sourceMap: true,
+        // This banner is required to load the node specific libs like "os" dynamically
+        // From: https://github.com/evanw/esbuild/issues/1921#issuecomment-1152887672
+        banner:
+          "import { createRequire } from 'module';const require = createRequire(import.meta.url);",
       },
     });
 
