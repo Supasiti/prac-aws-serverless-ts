@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 // import 'source-map-support/register';
 import * as cdk from 'aws-cdk-lib';
-import { FunctionStack } from './toDoServiceStack.js';
+// eslint-disable-next-line import/no-unresolved
+import { FunctionStack } from './userServiceStack.js';
 
 const project = 'pas';
-const service = 'todo';
+const service = 'user';
 const app = new cdk.App();
 const rootId = `${project}-${service}-thara`;
 

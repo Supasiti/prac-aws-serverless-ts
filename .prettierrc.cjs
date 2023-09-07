@@ -1,7 +1,9 @@
 // Documentation for this file: https://prettier.io/en/configuration.html
 module.exports = {
   printWidth: 80,
+  tabWidth: 2,
+  useTabs: false,
   singleQuote: true,
-  trailingComma: 'es5',
+  trailingComma: 'all',
   bracketSameLine: true,
-};
+}

@@ -8,10 +8,10 @@ export class FunctionStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
-    const fnName = 'hello';
+    const fnName = 'getUser';
 
-    const handler = new nodeLambda.NodejsFunction(this, fnName, {
-      description: 'say hello world',
+    const getUserHandler = new nodeLambda.NodejsFunction(this, fnName, {
+      description: 'get user details by id',
       runtime: lambda.Runtime.NODEJS_18_X,
       entry: `./src/handlers/${fnName}.ts`,
       handler: 'handler',
@@ -25,13 +25,20 @@ export class FunctionStack extends cdk.Stack {
 
     const api = new apigw.RestApi(this, id, {
       ...props,
-      restApiName: "Hello Service",
+      restApiName: 'User Service',
     });
 
-    const sayHelloIntegration = new apigw.LambdaIntegration(handler, {
-      requestTemplates: { "application/json": '{ "statusCode": "200" }' }
+    const getUserIntegration = new apigw.LambdaIntegration(getUserHandler, {
+      requestTemplates: { 'application/json': '{ "statusCode": "200" }' },
     });
 
-    api.root.addMethod("GET", sayHelloIntegration); 
+    const userPath = api.root.addResource('users');
+
+    // get user by id
+    userPath.addResource('{userID}').addMethod('GET', getUserIntegration, {
+      requestParameters: {
+        'method.request.path.userID': true,
+      },
+    });
   }
 }

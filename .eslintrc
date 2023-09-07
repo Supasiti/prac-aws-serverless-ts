@@ -1,28 +1,38 @@
 {
   "root": true,
+  "globals": {
+    "module": true
+  },
   "parser": "@typescript-eslint/parser",
-  "plugins": ["prettier"],
-  "extends": ["airbnb-base", "prettier"],
+  "plugins": ["prettier", "@typescript-eslint"],
+  "extends": ["prettier", "airbnb-base", "eslint:recommended", "plugin:@typescript-eslint/recommended"],
   "rules": { "prettier/prettier": "error" },
   "overrides": [
     // typescript
     {
-      "files": ["./src/**/*.ts"],
-      "plugins": ["@typescript-eslint"],
-      "extends": ["plugin:@typescript-eslint/recommended"],
+      "files": ["./**/*.ts"],
       "env": {
         "es2022": true,
         "node": true
       },
       "rules": {
+        "no-console": "off",
+        "no-new": "off",
+
         "import/prefer-default-export": "off",
         "import/extensions": "off",
+        "import/no-unresolved": "warn",
+
+        "@typescript-eslint/no-explicit-any": "off",
         "@typescript-eslint/no-unused-vars": "error",
         "@typescript-eslint/consistent-type-definitions": ["error", "type"]
       }
     }
   ],
   "settings": {
+    "import/parsers": {
+      "@typescript-eslint/parser": ['.ts', '.tsx']
+    },
     "import/resolver": {
       "node": {
         "extensions": [".js", ".jsx", ".ts", ".tsx"]
