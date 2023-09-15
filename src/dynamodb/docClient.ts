@@ -1,9 +1,9 @@
 import { DynamoDBClient, DynamoDBClientConfig } from '@aws-sdk/client-dynamodb';
 import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
-import { ConfiguredRetryStrategy } from '@smithy/util-retry';
+// import { ConfiguredRetryStrategy } from '@smithy/util-retry';
 import { log } from '../common/logger';
 
-const region = process.env.AWS_REGION;
+const region = process.env.REGION;
 const maxAttempts = Number(process.env.DDB_MAX_RETRIES) || 3;
 const retryDelayOptionsBase = Number(process.env.DDB_RETRY_DELAY_BASE) || 1000;
 
@@ -28,10 +28,13 @@ function createDocumentClient(
   const client = new DynamoDBClient({
     region,
     maxAttempts,
-    retryStrategy: new ConfiguredRetryStrategy(
-      maxAttempts, // max attempts.
-      (attempt: number) => retryDelayOptionsBase * attempt, // backoff function.
-    ),
+    // (2023-09-15)
+    // Currently DynamoDB does not support RetryStrategyV2 that ConfiguredRetryStrategy implements
+    // It will throw "retryStrategy.retry is not a function" error during runtime.
+    // retryStrategy: new ConfiguredRetryStrategy(
+    //   maxAttempts, // max attempts.
+    //   (attempt: number) => retryDelayOptionsBase * attempt, // backoff function.
+    // ),
     retryMode: 'STANDARD',
     ...options,
   });

@@ -18,11 +18,15 @@ export const handler = async (
   try {
     // eslint-disable-next-line
     const { userID } = event.pathParameters || {};
+
+    // TODO: do a proper validation
     if (!userID) {
       throw ValidationError('missing userID');
     }
+    // this may throw an error
+    const params = parseInt(userID, 10);
 
-    const user = await userService.getUserByID(userID);
+    const user = await userService.getUserByID(params);
     if (!user) {
       throw DataNotFoundError('no user found');
     }
