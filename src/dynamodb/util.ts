@@ -1,8 +1,5 @@
-import { log } from '../common/logger';
-
+// Get the table name from CDK, but use Users for local development
 export const TABLE_NAME = process.env.USER_TABLE_NAME || 'Users';
-
-log.info(`TABLE_NAME: ${TABLE_NAME}`);
 
 export const getPrimaryKey = (userID: number) => `${userID}`;
 

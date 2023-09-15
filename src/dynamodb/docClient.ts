@@ -28,7 +28,7 @@ function createDocumentClient(
   const client = new DynamoDBClient({
     region,
     maxAttempts,
-    // (2023-09-15)
+    // Date: 2023-09-15
     // Currently DynamoDB does not support RetryStrategyV2 that ConfiguredRetryStrategy implements
     // It will throw "retryStrategy.retry is not a function" error during runtime.
     // retryStrategy: new ConfiguredRetryStrategy(

@@ -12,7 +12,7 @@ const tableName = `${rootId}-user`;
 
 console.log(`Deploying... ${rootId} Stack`);
 
-new ResourceStack(app, `${rootId}`, {
+new ResourceStack(app, `${rootId}-resources`, {
   description: `${rootId} resource stack`,
   tableName,
 });
