@@ -1,20 +1,14 @@
-import {
-  DynamoDBDocumentClient,
-  GetCommand,
-  GetCommandOutput,
-} from '@aws-sdk/lib-dynamodb';
+import { GetCommand, GetCommandOutput } from '@aws-sdk/lib-dynamodb';
 import { log } from '../common/logger';
 import { getDocumentClient } from './docClient';
 import { TABLE_NAME, stripPrivateFields, toGetUserKey } from './util';
-import type { User } from '../models/types';
-
-type GetUserDeps = {
-  dbClient: DynamoDBDocumentClient;
-};
+import { mockUser } from 'src/testData/mockUser';
+import type { CreateUserParams, User } from '../models/types';
+import type { DaoDeps } from './types';
 
 export async function getUser(
   userID: number,
-  _deps?: GetUserDeps,
+  _deps?: DaoDeps,
 ): Promise<User | undefined> {
   log.info({ userID }, 'getUser: params');
 
@@ -35,4 +29,8 @@ export async function getUser(
   if (!Item) return Item;
 
   return stripPrivateFields<User>(Item);
+}
+
+export async function createUser(_params: CreateUserParams) {
+  return mockUser();
 }

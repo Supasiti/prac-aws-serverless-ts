@@ -80,4 +80,43 @@ export class FunctionStack extends cdk.Stack {
       },
     });
   }
+
+  addCreateUserApi(id: string, props: FunctionStackProps) {
+    const { userTableName } = props;
+    const fnName = 'createUser';
+
+    const fn = new nodeLambda.NodejsFunction(this, fnName, {
+      ...props,
+      description: 'create new user',
+      runtime: lambda.Runtime.NODEJS_18_X,
+      entry: `./src/handlers/${fnName}.ts`,
+      handler: 'handler',
+      functionName: `${id}-${fnName}`,
+      bundling: {
+        target: 'es2020',
+        format: nodeLambda.OutputFormat.ESM,
+        sourceMap: true,
+        // This banner is required to load the node specific libs like "os" dynamically
+        // From: https://github.com/evanw/esbuild/issues/1921#issuecomment-1152887672
+        banner:
+          "import { createRequire } from 'module';const require = createRequire(import.meta.url);",
+      },
+      environment: {
+        USER_TABLE_NAME: userTableName,
+        REGION: REGION,
+      },
+    });
+
+    fn.role?.attachInlinePolicy(this.userTablePolicy);
+
+    const apiIntegration = new apigw.LambdaIntegration(fn, {
+      requestTemplates: { 'application/json': '{ "statusCode": "200" }' },
+    });
+
+    const userPath = this.api.root.addResource('users');
+
+    // attach post method
+    // We prefer to validate request body ourselves
+    userPath.addMethod('POST', apiIntegration);
+  }
 }

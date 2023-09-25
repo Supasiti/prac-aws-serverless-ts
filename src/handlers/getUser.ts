@@ -2,9 +2,10 @@ import { log } from '../common/logger';
 import { DataNotFoundError, ValidationError } from '../common/error';
 import { error, success } from '../common/jsonResponse';
 import * as userDaoMod from '../dao/userDao';
+import { UserDao } from '../dao/types';
 
 type HandlerDeps = {
-  userDao: typeof userDaoMod;
+  userDao: UserDao;
 };
 
 export const handler = async (

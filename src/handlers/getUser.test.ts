@@ -5,6 +5,7 @@ describe('getUser', () => {
   test('should return a user if found', async () => {
     const mockUserDao = {
       getUser: jest.fn().mockResolvedValue(mockUser()),
+      createUser: jest.fn(),
     };
 
     const testEvent = {
@@ -36,6 +37,7 @@ describe('getUser', () => {
       async ({ testParams, expectedMessage }) => {
         const mockUserDao = {
           getUser: jest.fn().mockResolvedValue(mockUser()),
+          createUser: jest.fn(),
         };
 
         const testEvent = {
@@ -56,6 +58,7 @@ describe('getUser', () => {
     test('should return data not found error when there is no user', async () => {
       const mockUserDao = {
         getUser: jest.fn().mockResolvedValue(undefined),
+        createUser: jest.fn(),
       };
 
       const testEvent = {
@@ -75,6 +78,7 @@ describe('getUser', () => {
     test('should handle unexpected error', async () => {
       const mockUserDao = {
         getUser: jest.fn().mockRejectedValue(new Error('some error')),
+        createUser: jest.fn(),
       };
 
       const testEvent = {

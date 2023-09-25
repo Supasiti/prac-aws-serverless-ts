@@ -4,3 +4,5 @@ export type User = {
   balance: number;
   userID: number;
 };
+
+export type CreateUserParams = Omit<User, 'userID'>;
