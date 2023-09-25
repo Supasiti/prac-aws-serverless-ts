@@ -1,10 +1,10 @@
 import { log } from '../common/logger';
 import { DataNotFoundError, ValidationError } from '../common/error';
 import { error, success } from '../common/jsonResponse';
-import * as userServiceMod from '../services/userService';
+import * as userDaoMod from '../dao/userDao';
 
 type HandlerDeps = {
-  userService: typeof userServiceMod;
+  userDao: typeof userDaoMod;
 };
 
 export const handler = async (
@@ -13,20 +13,15 @@ export const handler = async (
   deps?: HandlerDeps,
 ) => {
   log.info(event, 'getUser Event');
-  const { userService = userServiceMod } = deps || {};
+  const { userDao = userDaoMod } = deps || {};
 
   try {
     // eslint-disable-next-line
     const { userID } = event.pathParameters || {};
 
-    // TODO: do a proper validation
-    if (!userID) {
-      throw ValidationError('missing userID');
-    }
-    // this may throw an error
-    const params = parseInt(userID, 10);
+    const params = validateRequest(userID);
 
-    const user = await userService.getUserByID(params);
+    const user = await userDao.getUser(params);
     if (!user) {
       throw DataNotFoundError('no user found');
     }
@@ -38,3 +33,15 @@ export const handler = async (
     return error(err as Error);
   }
 };
+
+function validateRequest(params?: string): number {
+  if (!params) {
+    throw ValidationError('missing userID');
+  }
+
+  const result = parseInt(params, 10);
+  if (Number.isNaN(result)) {
+    throw ValidationError('userID must be an integer');
+  }
+  return result;
+}

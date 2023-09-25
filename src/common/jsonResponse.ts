@@ -54,7 +54,7 @@ const toErrors = (err: string | Error) => {
 
 export const error = (err: string | Error, statusCode?: number) => {
   const errors = toErrors(err);
-  let code = statusCode || 400;
+  let code = statusCode || 500;
 
   if (err instanceof HttpError) {
     // extract status code from HttpError
