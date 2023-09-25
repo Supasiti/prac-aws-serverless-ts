@@ -12,6 +12,8 @@ export function toGetUserKey(userID: number) {
   };
 }
 
+export const USER_SCHEMA = 'USER';
+
 export const PRIVATE_FIELD_INDICATOR = '$';
 
 export function stripPrivateFields<T>(obj: Record<string, any>): T {
