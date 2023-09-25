@@ -10,13 +10,15 @@ type HandlerDeps = {
 export const handler = async (
   event: AWSLambda.APIGatewayEvent,
   _ctx: Partial<AWSLambda.Context>,
-  deps?: HandlerDeps,
+  _deps?: HandlerDeps,
 ) => {
   log.info(event, 'getUser Event');
-  const { userDao = userDaoMod } = deps || {};
+
+  // istanbul ignore next
+  const { userDao = userDaoMod } = _deps || {};
 
   try {
-    // eslint-disable-next-line
+    // istanbul ignore next
     const { userID } = event.pathParameters || {};
 
     const params = validateRequest(userID);

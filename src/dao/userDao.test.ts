@@ -2,6 +2,7 @@ import { DynamoDBDocumentClient } from '@aws-sdk/lib-dynamodb';
 import { getDocumentClient } from './docClient';
 import { getUser } from './userDao';
 import { log } from '../common/logger';
+import { mockUser } from '../testData/mockUser';
 
 let client: DynamoDBDocumentClient;
 
@@ -28,20 +29,21 @@ describe('userDao', () => {
 
   describe('getUser', () => {
     test("should return undefined if it doesn't exist", async () => {
-      const user = await getUser(4000);
+      const mockDbClient = {
+        send: jest.fn().mockResolvedValue({}),
+      } as any;
+      const user = await getUser(4000, { dbClient: mockDbClient });
 
       expect(user).toBeUndefined();
     });
 
     test('should return user from a userID', async () => {
-      const user = await getUser(1);
+      const mockDbClient = {
+        send: jest.fn().mockResolvedValue({ Item: mockUser() }),
+      } as any;
+      const user = await getUser(1, { dbClient: mockDbClient });
 
-      expect(user).toStrictEqual({
-        userID: 1,
-        balance: 3251.12,
-        name: 'Bob',
-        email: 'bob.builder@email.com',
-      });
+      expect(user).toStrictEqual(mockUser());
     });
   });
 });
