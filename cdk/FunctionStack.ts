@@ -19,6 +19,7 @@ type FunctionStackProps = cdk.StackProps & {
 
 export class FunctionStack extends cdk.Stack {
   private readonly api: apigw.RestApi;
+  private readonly userPath: apigw.Resource;
   private readonly userTablePolicy: iam.Policy;
 
   constructor(scope: Construct, id: string, props: FunctionStackProps) {
@@ -28,6 +29,7 @@ export class FunctionStack extends cdk.Stack {
       ...props,
       restApiName: 'User Service',
     });
+    this.userPath = this.api.root.addResource('users');
 
     this.userTablePolicy = createDynamoDbTableIAMPolicy({
       actions: ['dynamodb:GetItem', 'dynamodb:PutItem'],
@@ -37,6 +39,7 @@ export class FunctionStack extends cdk.Stack {
     });
 
     this.addGetUserApi(id, props);
+    this.addCreateUserApi(id, props);
   }
 
   addGetUserApi(id: string, props: FunctionStackProps) {
@@ -71,10 +74,8 @@ export class FunctionStack extends cdk.Stack {
       requestTemplates: { 'application/json': '{ "statusCode": "200" }' },
     });
 
-    const userPath = this.api.root.addResource('users');
-
     // get user by id
-    userPath.addResource('{userID}').addMethod('GET', apiIntegration, {
+    this.userPath.addResource('{userID}').addMethod('GET', apiIntegration, {
       requestParameters: {
         'method.request.path.userID': true,
       },
@@ -113,10 +114,8 @@ export class FunctionStack extends cdk.Stack {
       requestTemplates: { 'application/json': '{ "statusCode": "200" }' },
     });
 
-    const userPath = this.api.root.addResource('users');
-
     // attach post method
     // We prefer to validate request body ourselves
-    userPath.addMethod('POST', apiIntegration);
+    this.userPath.addMethod('POST', apiIntegration);
   }
 }
