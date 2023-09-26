@@ -14,7 +14,7 @@ import {
 } from './util';
 import type { CreateUserParams, User } from '../models/types';
 import type { DaoDeps } from './types';
-import { GeneralError, HttpError } from 'src/common/error';
+import { GeneralError } from '../common/error';
 
 export async function getUser(
   userID: number,
