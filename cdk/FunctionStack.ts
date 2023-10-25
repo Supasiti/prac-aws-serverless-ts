@@ -1,13 +1,14 @@
-import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
+import * as cdk from 'aws-cdk-lib';
 import * as apigw from 'aws-cdk-lib/aws-apigateway';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as nodeLambda from 'aws-cdk-lib/aws-lambda-nodejs';
+import * as sns from 'aws-cdk-lib/aws-sns';
+import * as eventSources from 'aws-cdk-lib/aws-lambda-event-sources';
 import dotenv from 'dotenv';
 import path from 'path';
 
-import { createDynamoDbTableIAMPolicy } from './iam.js';
+import { createDynamoDbTableIAMPolicy, createSnsIAMPolicy } from './iam.js';
+import { createLambda } from './Lambda.js';
 
 dotenv.config({ path: path.join(process.cwd(), 'config/dev.env') });
 
@@ -15,15 +16,20 @@ const REGION = process.env.AWS_REGION || '';
 
 type FunctionStackProps = cdk.StackProps & {
   userTableName: string;
+  snsTopic: string;
 };
 
 export class FunctionStack extends cdk.Stack {
   private readonly api: apigw.RestApi;
   private readonly userPath: apigw.Resource;
   private readonly userTablePolicy: iam.Policy;
+  private readonly userTopic: sns.ITopic;
+  private readonly userTopicPolicy: iam.Policy;
 
   constructor(scope: Construct, id: string, props: FunctionStackProps) {
     super(scope, id, props);
+
+    const { snsTopic } = props;
 
     this.api = new apigw.RestApi(this, id, {
       ...props,
@@ -38,30 +44,31 @@ export class FunctionStack extends cdk.Stack {
       stack: this,
     });
 
+    this.userTopic = sns.Topic.fromTopicArn(
+      this,
+      snsTopic,
+      `arn:aws:sns:${REGION}:${this.account}:${snsTopic}`,
+    );
+    this.userTopicPolicy = createSnsIAMPolicy({
+      actions: ['sns:Publish'],
+      policyName: `${id}-topic-policy`,
+      resourceNames: [props.snsTopic],
+      stack: this,
+    });
+
     this.addGetUserApi(id, props);
     this.addCreateUserApi(id, props);
+    this.addMessageLogger(id);
   }
 
   addGetUserApi(id: string, props: FunctionStackProps) {
     const { userTableName } = props;
     const fnName = 'getUser';
 
-    const fn = new nodeLambda.NodejsFunction(this, fnName, {
-      ...props,
+    const fn = createLambda(this, {
+      id,
+      fnName,
       description: 'get user details by id',
-      runtime: lambda.Runtime.NODEJS_18_X,
-      entry: `./src/handlers/${fnName}.ts`,
-      handler: 'handler',
-      functionName: `${id}-${fnName}`,
-      bundling: {
-        target: 'es2020',
-        format: nodeLambda.OutputFormat.ESM,
-        sourceMap: true,
-        // This banner is required to load the node specific libs like "os" dynamically
-        // From: https://github.com/evanw/esbuild/issues/1921#issuecomment-1152887672
-        banner:
-          "import { createRequire } from 'module';const require = createRequire(import.meta.url);",
-      },
       environment: {
         USER_TABLE_NAME: userTableName,
         REGION: REGION,
@@ -86,29 +93,19 @@ export class FunctionStack extends cdk.Stack {
     const { userTableName } = props;
     const fnName = 'createUser';
 
-    const fn = new nodeLambda.NodejsFunction(this, fnName, {
-      ...props,
+    const fn = createLambda(this, {
+      id,
+      fnName,
       description: 'create new user',
-      runtime: lambda.Runtime.NODEJS_18_X,
-      entry: `./src/handlers/${fnName}.ts`,
-      handler: 'handler',
-      functionName: `${id}-${fnName}`,
-      bundling: {
-        target: 'es2020',
-        format: nodeLambda.OutputFormat.ESM,
-        sourceMap: true,
-        // This banner is required to load the node specific libs like "os" dynamically
-        // From: https://github.com/evanw/esbuild/issues/1921#issuecomment-1152887672
-        banner:
-          "import { createRequire } from 'module';const require = createRequire(import.meta.url);",
-      },
       environment: {
         USER_TABLE_NAME: userTableName,
         REGION: REGION,
+        SNS_TOPIC: this.userTopic.topicArn,
       },
     });
 
     fn.role?.attachInlinePolicy(this.userTablePolicy);
+    fn.role?.attachInlinePolicy(this.userTopicPolicy);
 
     const apiIntegration = new apigw.LambdaIntegration(fn, {
       requestTemplates: { 'application/json': '{ "statusCode": "200" }' },
@@ -117,5 +114,17 @@ export class FunctionStack extends cdk.Stack {
     // attach post method
     // We prefer to validate request body ourselves
     this.userPath.addMethod('POST', apiIntegration);
+  }
+
+  addMessageLogger(id: string) {
+    const fnName = 'messageLogger';
+
+    const fn = createLambda(this, {
+      id,
+      fnName,
+      description: 'log sns message',
+    });
+
+    fn.addEventSource(new eventSources.SnsEventSource(this.userTopic));
   }
 }

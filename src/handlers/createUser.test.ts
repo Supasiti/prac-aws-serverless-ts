@@ -7,15 +7,23 @@ describe('createUser', () => {
       getUser: jest.fn(),
       createUser: jest.fn().mockResolvedValue(mockUser()),
     };
+    const mockSns = {
+      publish: jest.fn(),
+    };
 
     const testEvent = {
       body: JSON.stringify(mockCreateUserParams()),
     } as unknown as AWSLambda.APIGatewayEvent;
 
-    const result = await handler(testEvent, {}, { userDao: mockUserDao });
+    const result = await handler(
+      testEvent,
+      {},
+      { userDao: mockUserDao, sns: mockSns },
+    );
 
     expect(result.statusCode).toEqual(200);
     expect(JSON.parse(result.body).data).toStrictEqual(mockUser());
+    expect(mockSns.publish).toHaveBeenCalled();
   });
 
   describe('error handling', () => {
@@ -58,12 +66,19 @@ describe('createUser', () => {
           createUser: jest.fn().mockResolvedValue(mockUser()),
           getUser: jest.fn(),
         };
+        const mockSns = {
+          publish: jest.fn(),
+        };
 
         const testEvent = {
           body: testParams,
         } as unknown as AWSLambda.APIGatewayEvent;
 
-        const result = await handler(testEvent, {}, { userDao: mockUserDao });
+        const result = await handler(
+          testEvent,
+          {},
+          { userDao: mockUserDao, sns: mockSns },
+        );
 
         expect(result.statusCode).toEqual(403);
         expect(JSON.parse(result.body)).toStrictEqual(
@@ -71,6 +86,7 @@ describe('createUser', () => {
             { detail: expectedMessage, title: 'HttpError' },
           ]),
         );
+        expect(mockSns.publish).not.toHaveBeenCalled();
       },
     );
 

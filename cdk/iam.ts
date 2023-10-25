@@ -17,6 +17,15 @@ export function createDynamoDbTableIAMPolicy(params: CreateIAMPolicyParams) {
   });
 }
 
+// sns use only topic name
+export function createSnsIAMPolicy(params: CreateIAMPolicyParams) {
+  return createServiceIAMPolicy({
+    ...params,
+    service: 'sns',
+    resourceType: '',
+  });
+}
+
 function createServiceIAMPolicy(
   params: CreateIAMPolicyParams & { resourceType: string; service: string },
 ) {

@@ -15,6 +15,7 @@
   "license": "ISC",
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.410.0",
+    "@aws-sdk/client-sns": "^3.435.0",
     "@aws-sdk/lib-dynamodb": "^3.410.0",
     "@aws-sdk/util-dynamodb": "^3.410.0",
     "@smithy/util-retry": "^2.0.0",
