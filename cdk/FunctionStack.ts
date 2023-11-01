@@ -4,6 +4,8 @@ import * as apigw from 'aws-cdk-lib/aws-apigateway';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as sns from 'aws-cdk-lib/aws-sns';
 import * as eventSources from 'aws-cdk-lib/aws-lambda-event-sources';
+import * as cognito from 'aws-cdk-lib/aws-cognito';
+
 import dotenv from 'dotenv';
 import path from 'path';
 
@@ -16,7 +18,7 @@ const REGION = process.env.AWS_REGION || '';
 
 type FunctionStackProps = cdk.StackProps & {
   userTableName: string;
-  snsTopic: string;
+  userPoolName: string;
 };
 
 export class FunctionStack extends cdk.Stack {
@@ -25,11 +27,10 @@ export class FunctionStack extends cdk.Stack {
   private readonly userTablePolicy: iam.Policy;
   private readonly userTopic: sns.ITopic;
   private readonly userTopicPolicy: iam.Policy;
+  private readonly apiAuthorizer: apigw.CfnAuthorizer;
 
   constructor(scope: Construct, id: string, props: FunctionStackProps) {
     super(scope, id, props);
-
-    const { snsTopic } = props;
 
     this.api = new apigw.RestApi(this, id, {
       ...props,
@@ -44,21 +45,47 @@ export class FunctionStack extends cdk.Stack {
       stack: this,
     });
 
-    this.userTopic = sns.Topic.fromTopicArn(
-      this,
-      snsTopic,
-      `arn:aws:sns:${REGION}:${this.account}:${snsTopic}`,
-    );
+    // create user sns topic
+    this.userTopic = this.addUserTopic(id);
     this.userTopicPolicy = createSnsIAMPolicy({
       actions: ['sns:Publish'],
       policyName: `${id}-topic-policy`,
-      resourceNames: [props.snsTopic],
+      resourceNames: [this.userTopic.topicName],
       stack: this,
     });
 
+    // create user pool for authorizer
+    // import userPoolId from the value that is exported by ResourceStack
+    const userPoolId = cdk.Fn.importValue(props.userPoolName);
+    const userPool = cognito.UserPool.fromUserPoolId(
+      this,
+      props.userPoolName,
+      userPoolId,
+    );
+    this.apiAuthorizer = this.addAuthorizer(id, userPool);
+
+    // lambdas
     this.addGetUserApi(id, props);
     this.addCreateUserApi(id, props);
     this.addMessageLogger(id);
+  }
+
+  addUserTopic(id: string) {
+    const snsTopic = `${id}-user-topic`;
+
+    return new sns.Topic(this, snsTopic, { topicName: snsTopic });
+  }
+
+  addAuthorizer(id: string, userPool: cognito.IUserPool) {
+    const authId = `${id}-authorizer`;
+
+    return new apigw.CfnAuthorizer(this, authId, {
+      restApiId: this.api.restApiId,
+      name: authId,
+      type: 'COGNITO_USER_POOLS',
+      identitySource: 'method.request.header.Authorization',
+      providerArns: [userPool.userPoolArn],
+    });
   }
 
   addGetUserApi(id: string, props: FunctionStackProps) {
@@ -85,6 +112,10 @@ export class FunctionStack extends cdk.Stack {
     this.userPath.addResource('{userID}').addMethod('GET', apiIntegration, {
       requestParameters: {
         'method.request.path.userID': true,
+      },
+      authorizationType: apigw.AuthorizationType.COGNITO,
+      authorizer: {
+        authorizerId: this.apiAuthorizer.ref,
       },
     });
   }

@@ -84,3 +84,44 @@ or specific stack
 ```
 cdk destroy pas-user-thara-api
 ```
+
+## Sign up user process
+
+Sign up a user 
+```
+aws cognito-idp sign-up \
+  --client-id <client id> \
+  --username "test@test.com" \
+  --password "Password123" 
+```
+
+admin verify 
+```
+aws cognito-idp admin-confirm-sign-up \
+  --user-pool-id <user pool id> \
+  --username "test@test.com"
+```
+
+user login
+```
+aws cognito-idp initiate-auth \
+  --auth-flow USER_PASSWORD_AUTH \
+  --client-id <client id> \
+  --auth-parameters USERNAME=test@test.com,PASSWORD=<password>
+```
+
+It should return something like:
+```
+{
+    "ChallengeParameters": {},
+    "AuthenticationResult": {
+        "AccessToken": ..., 
+        "ExpiresIn": 3600,
+        "TokenType": "Bearer",
+        "RefreshToken": ...,
+        "IdToken": ..., 
+    }
+}
+```
+
+Use `IdToken` as a bearer token in header.

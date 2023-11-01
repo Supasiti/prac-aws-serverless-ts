@@ -9,6 +9,7 @@
   "scripts": {
     "build": "npx tsc",
     "test": "jest --coverage",
+    "test:unit": "jest",
     "lint": "eslint --ext js,ts cdk src --fix"
   },
   "author": "",

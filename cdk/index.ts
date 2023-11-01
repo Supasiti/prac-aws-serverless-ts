@@ -9,18 +9,18 @@ const service = 'user';
 const app = new cdk.App();
 const rootId = `${project}-${service}-thara`;
 const tableName = `${rootId}-user`;
-const snsTopic = `${rootId}-user-topic`;
+const userPoolName = `${rootId}-userpool`;
 
 console.log(`Deploying... ${rootId} Stack`);
 
 new ResourceStack(app, `${rootId}-resources`, {
   description: `${rootId} resource stack`,
   tableName,
-  snsTopic,
+  userPoolName,
 });
 
 new FunctionStack(app, `${rootId}-api`, {
   description: `${rootId} function stack`,
   userTableName: tableName,
-  snsTopic,
+  userPoolName,
 });
